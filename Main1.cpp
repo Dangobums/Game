@@ -1,133 +1,79 @@
 #include<bits/stdc++.h>
 #include<SDL.h>
 #include<SDL_events.h>
+#include<SDL_image.h>
 using namespace std;
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
-string SCREEN_TITLE = "GAME";
-/*void logSDLError(ostream& os,const string &msg, bool fatal)
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 600
+#define SCREENTITLE "GAME"
+SDL_Texture *Loadtexture (string filepath,SDL_Renderer *rendertarget)
 {
-    os << msg << " Error: " << SDL_GetError() << endl;
-    if (fatal) {
-        SDL_Quit();
-        exit(1);
-    }
-}
-void initSDL(SDL_Window* &window, SDL_Renderer* &renderer)
-{
-
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
-        logSDLError(cout, "SDL_Init", true);
-
-    window = SDL_CreateWindow(SCREEN_TITLE.c_str(), SDL_WINDOWPOS_CENTERED,
-       SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    if (window == nullptr) logSDLError(cout, "CreateWindow", true);
-
-
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED |
-                                              SDL_RENDERER_PRESENTVSYNC);
-    if (renderer == nullptr) logSDLError(cout, "CreateRenderer", true);
-
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-    SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
-}
-void quitSDL(SDL_Window* window, SDL_Renderer* renderer)
-{
-	SDL_DestroyRenderer(renderer);
-	SDL_DestroyWindow(window);
-	SDL_Quit();
-}*/
-void SwitchImage(SDL_Surface *windowSurface)
-{
-    bool isRunning = true;
-    SDL_Surface *image1 = nullptr;
-    SDL_Surface *image2 = nullptr;
-    SDL_Surface *currentImage = nullptr;
-    image1 = SDL_LoadBMP("Test.bmp");
-    image2 = SDL_LoadBMP("Test1.bmp");
-    currentImage = image1;
-    SDL_Event ev;
-    while (isRunning)
+    SDL_Texture *Texture = nullptr;
+    SDL_Surface *surface = IMG_Load(filepath.c_str());
+    if (surface == NULL)
     {
-        while (SDL_PollEvent(&ev) != 0)
-        {
-
-        if (ev.type == SDL_KEYDOWN)
-        {
-            switch(ev.key.keysym.sym)
-            {
-                case SDLK_1:
-                    currentImage = image1;
-                    break;
-                case SDLK_2:
-                    currentImage = image2;
-                    break;
-            }
-        }
-        }
+        cout << "optimized fail" << endl;
     }
-    SDL_BlitSurface(currentImage, NULL, windowSurface, NULL);
+    else
+    {
+        Texture = SDL_CreateTextureFromSurface(rendertarget, surface);
+    }
+    SDL_FreeSurface(surface);
+    return Texture;
 }
-void waitUntilKeyPressed()
+
+bool running = true;
+void input()
 {
-    bool isRunning = true;
     SDL_Event e;
-    while (isRunning)
+    while (running)
     {
-        while (SDL_PollEvent(&e) !=0)
+    while (SDL_PollEvent(&e))
+    {
+        if (e.type == SDL_QUIT)
         {
-            if (e.type == SDL_QUIT)
-            {
-                cout << "QUIT" << endl;
-                isRunning = false;
-            }
-            else if (e.type == SDL_KEYDOWN)
-            {
-                    switch(e.key.keysym.sym)
-                    {
-                        case SDLK_F1:
-                            cout << "QUIT" <<endl;
-                            return;
-
-                    }
-
-
-            }
+            running = false;
         }
-        SDL_Delay(100);
+        else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_F1)
+        {
+            running = false;
+        }
+    }
+    SDL_Delay(100);
     }
 }
 int main(int argc,char* argv[])
 {
     SDL_Window *window = nullptr;
-    SDL_Surface *winowSurface = nullptr;
-    SDL_Surface *imageSurface = nullptr;
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
-    {
-        cout << "Fail" << SDL_GetError() << endl;
-    }
-    else
-    {
-        window = SDL_CreateWindow("GAME", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT , SDL_WINDOW_SHOWN);
-        if (window == NULL)
-        {
-            cout << "Window creation error" << SDL_GetError() << endl;
-        }
-        else
-        {
-            //Window Create
-            imageSurface = SDL_LoadBMP("Test1.bmp");
-            winowSurface = SDL_GetWindowSurface(window);
-            SDL_BlitSurface(imageSurface, NULL ,winowSurface, NULL);
-            SDL_UpdateWindowSurface(window);
-            waitUntilKeyPressed();
+    SDL_Texture *imageSurface = nullptr;
+    SDL_Renderer *rendertarget = nullptr;
+    //
+    SDL_Init(SDL_INIT_VIDEO);
 
 
-        }
-    }
-    SDL_FreeSurface(imageSurface);
-    imageSurface = nullptr;
+    int imgFlag = IMG_INIT_PNG;
+    IMG_Init(imgFlag);
+    if(!(IMG_Init(imgFlag) & imgFlag))
+        cout << "error" << IMG_GetError() << endl;
+
+    window = SDL_CreateWindow(SCREENTITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT , SDL_WINDOW_SHOWN);
+    rendertarget = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+
+    imageSurface = Loadtexture("mainscreen.png", rendertarget);
+    SDL_RenderClear(rendertarget);
+    SDL_RenderCopy(rendertarget, imageSurface , NULL , NULL);
+    SDL_RenderPresent(rendertarget);
+    input();
+
+
+
     SDL_DestroyWindow(window);
+    SDL_DestroyTexture(imageSurface);
+    SDL_DestroyRenderer(rendertarget);
+    imageSurface = nullptr;
+    window = nullptr;
+    rendertarget = nullptr;
     SDL_Quit();
 
     //quitSDL(window, renderer);
